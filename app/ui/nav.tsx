@@ -4,14 +4,13 @@ export default function Nav() {
     return (
         <div className="flex h-full flex-col px-3 py-4 md:px-2">
             <Link
-                className="mb-2 flex h-10 items-end justify-start rounded-md bg-gray-200 p-4 md:h-20"
+                className="mb-2 flex h-20 items-end justify-start rounded-md bg-gray-200 p-4"
                 href="/"
             >
                 <div className="w-50 text-gray-800 md:w-60 text-[30px]">
                     ACADEMIC NOTE
                 </div>
             </Link>
-            ss
         </div>
     );
 }
