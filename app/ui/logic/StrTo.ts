@@ -20,6 +20,7 @@ export function parseInputToItem(input: string): Item {
             let y = sentN * 20;
             //仮設定
             let group = 0;
+            let id = uuidv4();
 
             // Find all decorations and the remaining text
             let i = 0;
@@ -41,7 +42,8 @@ export function parseInputToItem(input: string): Item {
                 decos,
                 x,
                 y,
-                group
+                group,
+                id
             };
         });
         termscount = 0;

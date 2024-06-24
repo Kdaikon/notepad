@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Line, Text, Group} from 'react-konva';
+import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 
@@ -73,33 +73,31 @@ const DrawingCanvas: React.FC = () => {
                 x={10}
                 y={50}
               />
-              {items.map((item) => (
-                item.sentences.map((sent) => {
-                  var calcX = 0;
-                  const sentenceElement =
-                    (
-                      <Group
-                        id={item.id}
-                      >
-                        {
-                          sent.terms.map((ter) => {
-
-                            const textElement =(
-                              <Text
-                                text={ter.text}
-                                x={ter.x}
-                                y={ter.y}
-                                fontSize={20}
-                              />
-                            );
-                            return textElement;
-                          })
-                        }
-                      </Group>
-                    )
-                  return sentenceElement;
-                })
-              ))}
+              {items.map((item) => {
+                const itemElement = (
+                  <Group
+                    id={item.id}
+                    key={item.id}
+                  >{
+                      item.sentences.map((sent) => (
+                        sent.terms.map((ter) => {
+                          const textElement = (
+                            <Text
+                              text={ter.text}
+                              x={ter.x}
+                              y={ter.y}
+                              fontSize={20}
+                              key={ter.id}
+                            />
+                          );
+                          return textElement;
+                        })
+                      ))
+                    }
+                  </Group>
+                )
+                return itemElement;
+              })}
               {lines.map((line) => (
                 <Line
                   key={line.id}
