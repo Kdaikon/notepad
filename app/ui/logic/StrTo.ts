@@ -1,83 +1,32 @@
-export type deco = {
-    deco: 'r' | 't' | 'z' | string;
-};
+import { sentence, term, Item, deco, deco_words } from "./StrToDef";
+import { v4 as uuidv4} from 'uuid';
 
-export type term = {
-    text: string;
-    decos: deco[];
-};
-
-export type sentence = {
-    terms: term[];
-};
-
-export type Item = {
-    sentences: sentence[];
-};
-
-const input: string = '^tTITLE\nDESCRI ^rPT ION IS^r'
-const deco_words: string[] = [
-    'r',
-    't',
-    'z',
-    'ｒ',
-    'ｔ',
-    'ｚ',
-]
-
-const itemInstance: Item = {
-    sentences: [
-        {
-            terms: [
-                {
-                    text: "Hello",
-                    decos: [{ deco: 'r' }]
-                },
-                {
-                    text: "world",
-                    decos: [{ deco: 't' }, { deco: 'z' }]
-                }
-            ]
-        },
-        {
-            terms: [
-                {
-                    text: "This",
-                    decos: [{ deco: 'z' }]
-                },
-                {
-                    text: "is",
-                    decos: [{ deco: 'r' }]
-                },
-                {
-                    text: "TypeScript",
-                    decos: [{ deco: 't' }]
-                }
-            ]
-        }
-    ]
-};
-
-console.log(itemInstance);
-
-function parseInputToItem(input: string): Item {
+export function parseInputToItem(input: string): Item {
     // Split input into sentences by newline character
     const sentenceStrings = input.split('\n');
+    var termscount = 0;
+    const id = uuidv4();
 
-    const sentences: sentence[] = sentenceStrings.map(sentenceStr => {
+    const sentences: sentence[] = sentenceStrings.map((sentenceStr, sentN) => {
         // Split sentence into terms by space character
         const termStrings = sentenceStr.split(' ');
 
-        const terms: term[] = termStrings.map(termStr => {
+        const terms: term[] = termStrings.map((termStr, termN) => {
             const decos: deco[] = [];
             let text = '';
+            //後で文字数判定追加 形骸化
+            let x = 0;
+            //  + termscount * 20;
+            let y = sentN * 20;
+            //仮設定
+            let group = 0;
 
             // Find all decorations and the remaining text
             let i = 0;
             while (i < termStr.length) {
                 if (termStr[i] === '^') {
                     i++;
-                    if (termStr[i] === 'r' || termStr[i] === 't' || termStr[i] === 'z') {
+                    if (deco_words.includes(termStr[i])) {
                         decos.push({ deco: termStr[i] });
                     }
                 } else {
@@ -86,11 +35,16 @@ function parseInputToItem(input: string): Item {
                 i++;
             }
 
+            termscount += text.length;
             return {
                 text,
-                decos
+                decos,
+                x,
+                y,
+                group
             };
         });
+        termscount = 0;
 
         return {
             terms
@@ -98,6 +52,7 @@ function parseInputToItem(input: string): Item {
     });
 
     return {
-        sentences
+        sentences,
+        id
     };
 }

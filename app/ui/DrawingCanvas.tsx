@@ -1,13 +1,20 @@
-// components/DrawingCanvas.tsx
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Line } from 'react-konva';
+import { Stage, Layer, Line, Text, Group} from 'react-konva';
+import { parseInputToItem } from "@/app/ui/logic/StrTo";
+import { Item } from './logic/StrToDef';
+
 
 const DrawingCanvas: React.FC = () => {
+  //free write
   const [lines, setLines] = useState<any[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [items, setItems] = useState<Item[]>([]);
   const stageRef = useRef<any>(null);
-  
+  let xOffset = 10; // 初期のX位置
+
   const handleMouseDown = (e: any) => {
     setIsDrawing(true);
     const stage = e.target.getStage();
@@ -29,33 +36,85 @@ const DrawingCanvas: React.FC = () => {
     setIsDrawing(false);
   };
 
+  useEffect(() => {
+    setItems([parseInputToItem(postContent)]);
+    //console.log(parseInputToItem(postContent));
+  }, [postContent]);
+
+  function handleClick(text: string) {
+    setPostContent(text);
+  }
+
   return (
-    <div>
-      <Stage
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onTouchStart={handleMouseDown}
-        onTouchMove={handleMouseMove}
-        onTouchEnd={handleMouseUp}
-        ref={stageRef}
-      >
-        <Layer>
-          {lines.map((line) => (
-            <Line
-              key={line.id}
-              points={line.points}
-              stroke="black"
-              strokeWidth={2}
-              tension={0.5}
-              lineCap="round"
-              globalCompositeOperation="source-over"
-            />
-          ))}
-        </Layer>
-      </Stage>
+    <div className="grid grid-cols-2">
+      <div>
+        <textarea id="message" name="message"
+          onChange={e => handleClick(e.target.value)} className="mt-1 block w-full h-[calc(100vh-10rem)] px-3 py-2 text-base placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
+        </textarea>
+      </div>
+
+      <div className="p-1">
+        <div className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
+          <Stage
+            width={window.innerWidth}
+            height={window.innerHeight}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchMove={handleMouseMove}
+            onTouchEnd={handleMouseUp}
+            ref={stageRef}
+          >
+            <Layer>
+              <Text
+                text='Try to drag a \n star'
+                fontSize={20}
+                x={10}
+                y={50}
+              />
+              {items.map((item) => (
+                item.sentences.map((sent) => {
+                  var calcX = 0;
+                  const sentenceElement =
+                    (
+                      <Group
+                        id={item.id}
+                      >
+                        {
+                          sent.terms.map((ter) => {
+
+                            const textElement =(
+                              <Text
+                                text={ter.text}
+                                x={ter.x}
+                                y={ter.y}
+                                fontSize={20}
+                              />
+                            );
+                            return textElement;
+                          })
+                        }
+                      </Group>
+                    )
+                  return sentenceElement;
+                })
+              ))}
+              {lines.map((line) => (
+                <Line
+                  key={line.id}
+                  points={line.points}
+                  stroke="black"
+                  strokeWidth={2}
+                  tension={0.5}
+                  lineCap="round"
+                  globalCompositeOperation="source-over"
+                />
+              ))}
+            </Layer>
+          </Stage>
+        </div>
+      </div>
     </div>
   );
 };
