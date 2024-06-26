@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
+import Konva from 'konva';
+import { text } from 'stream/consumers';
 
 
 const DrawingCanvas: React.FC = () => {
@@ -43,7 +45,7 @@ const DrawingCanvas: React.FC = () => {
 
   function handleClick(text: string) {
     setPostContent(text);
-  }
+  };
 
   return (
     <div className="grid grid-cols-2">
@@ -68,31 +70,53 @@ const DrawingCanvas: React.FC = () => {
           >
             <Layer>
               <Text
-                text='Try to drag a \n star'
+                text='Try to drag a star'
                 fontSize={20}
                 x={10}
                 y={50}
+                textDecoration=''
               />
               {items.map((item) => {
                 const itemElement = (
                   <Group
                     id={item.id}
                     key={item.id}
-                  >{
-                      item.sentences.map((sent) => (
-                        sent.terms.map((ter) => {
-                          const textElement = (
-                            <Text
-                              text={ter.text}
-                              x={ter.x}
-                              y={ter.y}
-                              fontSize={20}
-                              key={ter.id}
-                            />
-                          );
-                          return textElement;
-                        })
-                      ))
+                  >
+                    {
+                      item.sentences.map((sent) => {
+                        let length = 0;
+                        const sentElement = (
+                          sent.terms.map((ter) => {
+                            
+                            let FONTSIZE = 20;
+                            ter.decos.map((deco) => {
+                              if (deco.deco == 't'){
+                                FONTSIZE = 25;
+                              } 
+                            })
+                            
+                            
+                            const a = new Konva.Text({
+                              text: ter.text,
+                              fontSize: FONTSIZE
+                            });
+
+                            const textElement = (
+                              <Text
+                                text={ter.text}
+                                x={length}
+                                y={ter.y}
+                                fontSize={FONTSIZE}
+                                key={ter.id}
+                              />
+                            );
+                            length += a.getTextWidth();
+                            length += 10;
+                            return textElement;
+                          })
+                        )
+                        return sentElement;
+                      })
                     }
                   </Group>
                 )

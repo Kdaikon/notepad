@@ -9,6 +9,7 @@ export type term = {
     y: number;
     group: number;
     id: string;
+    fontsize: number;
 };
 
 export type sentence = {
