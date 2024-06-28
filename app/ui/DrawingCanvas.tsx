@@ -5,8 +5,8 @@ import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 import Konva from 'konva';
-import { text } from 'stream/consumers';
-
+import { PencilIcon } from '@heroicons/react/24/outline';
+import { toolf } from './logic/CanvasDefs';
 
 const DrawingCanvas: React.FC = () => {
   //free write
@@ -15,6 +15,7 @@ const DrawingCanvas: React.FC = () => {
   const [postContent, setPostContent] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const stageRef = useRef<any>(null);
+  const [tool, setTool] = useState<toolf>('arrow');
   let xOffset = 10; // 初期のX位置
 
   const handleMouseDown = (e: any) => {
@@ -56,6 +57,12 @@ const DrawingCanvas: React.FC = () => {
       </div>
 
       <div className="p-1">
+        <div className="grid grid-cols-8">
+          <button className="bg-cyan-500 hover:bg-cyan-600 h-12 w-12">
+            <PencilIcon className="h-12 w-12" />
+          </button>
+
+        </div>
         <div className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
           <Stage
             width={window.innerWidth}
@@ -69,13 +76,6 @@ const DrawingCanvas: React.FC = () => {
             ref={stageRef}
           >
             <Layer>
-              <Text
-                text='Try to drag a star'
-                fontSize={20}
-                x={10}
-                y={50}
-                textDecoration=''
-              />
               {items.map((item) => {
                 const itemElement = (
                   <Group
