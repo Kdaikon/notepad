@@ -5,17 +5,19 @@ import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 import Konva from 'konva';
-import { PencilIcon } from '@heroicons/react/24/outline';
+import { FolderPlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { toolf } from './logic/CanvasDefs';
+import React, { Component } from 'react';
 
 const DrawingCanvas: React.FC = () => {
   //free write
-  const [lines, setLines] = useState<any[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [postContent, setPostContent] = useState('');
-  const [items, setItems] = useState<Item[]>([]);
-  const stageRef = useRef<any>(null);
-  const [tool, setTool] = useState<toolf>('arrow');
+  const [lines, setLines] = useState<any[]>([]);//not use
+  const [isDrawing, setIsDrawing] = useState(false);//not use
+  const [postContent, setPostContent] = useState('');//テキスト入力エリア
+  const [items, setItems] = useState<Item[]>([]);//要素管理
+  const stageRef = useRef<any>(null);//not use
+  const [tool, setTool] = useState<toolf>('arrow');//現在ツール
+  const [activeItem, setActiveItem] = useState<string>('');//テキストエリア表示する要素
   let xOffset = 10; // 初期のX位置
 
   const handleMouseDown = (e: any) => {
@@ -40,8 +42,15 @@ const DrawingCanvas: React.FC = () => {
   };
 
   useEffect(() => {
-    setItems([parseInputToItem(postContent)]);
-    //console.log(parseInputToItem(postContent));
+    let xs = 0;
+    let ys = 0;
+    if (items[0]) {
+      xs = items[0].x;
+      ys = items[0].y;
+    }
+    console.log(xs);
+    //console.log(ys);
+    setItems([parseInputToItem(postContent,xs,ys)]);
   }, [postContent]);
 
   function handleClick(text: string) {
@@ -61,18 +70,21 @@ const DrawingCanvas: React.FC = () => {
           <button className="bg-cyan-500 hover:bg-cyan-600 h-12 w-12">
             <PencilIcon className="h-12 w-12" />
           </button>
+          <button className="bg-cyan-500 hover:bg-cyan-600 h-12 w-12" >
+            <FolderPlusIcon className="h-12 w-12" />
+          </button>
 
         </div>
         <div className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
           <Stage
             width={window.innerWidth}
             height={window.innerHeight}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onTouchStart={handleMouseDown}
-            onTouchMove={handleMouseMove}
-            onTouchEnd={handleMouseUp}
+            // onMouseDown={handleMouseDown}
+            // onMouseMove={handleMouseMove}
+            // onMouseUp={handleMouseUp}
+            // onTouchStart={handleMouseDown}
+            // onTouchMove={handleMouseMove}
+            // onTouchEnd={handleMouseUp}
             ref={stageRef}
           >
             <Layer>
@@ -81,21 +93,36 @@ const DrawingCanvas: React.FC = () => {
                   <Group
                     id={item.id}
                     key={item.id}
+                    draggable
+                    x={item.x}
+                    y={item.y}
+                    onDragEnd={(e) => {
+                      items[0].x = (e.target.x() > 0)? e.target.x() : 0;
+                      items[0].y = (e.target.y() > 0)? e.target.y() : 0;
+                    }}
+                    onDragStart={(e) => {
+                      const targetId = e.target.id();
+                      for (let i = 0;i < items.length; i++){
+                        if (items[i].id == targetId){
+                          setActiveItem(targetId);
+                        }
+                      }
+                    }}
                   >
                     {
                       item.sentences.map((sent) => {
                         let length = 0;
                         const sentElement = (
                           sent.terms.map((ter) => {
-                            
+
                             let FONTSIZE = 20;
                             ter.decos.map((deco) => {
-                              if (deco.deco == 't'){
+                              if (deco.deco == 't') {
                                 FONTSIZE = 25;
-                              } 
+                              }
                             })
-                            
-                            
+
+
                             const a = new Konva.Text({
                               text: ter.text,
                               fontSize: FONTSIZE

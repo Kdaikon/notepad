@@ -1,8 +1,9 @@
 import { sentence, term, Item, deco, deco_words } from "./StrToDef";
 import { v4 as uuidv4 } from 'uuid';
 
-export function parseInputToItem(input: string): Item {
+export function parseInputToItem(input: string, dx:number ,dy:number ): Item {
     // Split input into sentences by newline character
+    let originalText = input;
     const sentenceStrings = input.split('\n');
     var termscount = 0;
     //フォントサイズによる高さの幅
@@ -79,9 +80,14 @@ export function parseInputToItem(input: string): Item {
     });
 
 
-
+    let x = dx;
+    let y = dy;
+    
     return {
         sentences,
-        id
+        id,
+        x,
+        y,
+        originalText
     };
 }

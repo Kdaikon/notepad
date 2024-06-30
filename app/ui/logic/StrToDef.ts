@@ -19,6 +19,9 @@ export type sentence = {
 export type Item = {
     sentences: sentence[];
     id: string;
+    x: number;
+    y: number;
+    originalText: string;
 };
 
 const input: string = '^tTITLE\nDESCRI ^rPT ION IS^r'
