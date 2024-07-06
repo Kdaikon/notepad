@@ -5,7 +5,7 @@ import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 import Konva from 'konva';
-import { FolderPlusIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { FolderPlusIcon, PencilIcon, CursorArrowRaysIcon } from '@heroicons/react/24/outline';
 import { toolf } from './logic/CanvasDefs';
 import React, { Component } from 'react';
 
@@ -13,65 +13,105 @@ const DrawingCanvas: React.FC = () => {
   //free write
   const [lines, setLines] = useState<any[]>([]);//not use
   const [isDrawing, setIsDrawing] = useState(false);//not use
+  const [activeItem, setActiveItem] = useState('NEW');//テキストエリア表示する要素 NEW or uuidv4
   const [postContent, setPostContent] = useState('');//テキスト入力エリア
   const [items, setItems] = useState<Item[]>([]);//要素管理
   const stageRef = useRef<any>(null);//not use
   const [tool, setTool] = useState<toolf>('arrow');//現在ツール
-  const [activeItem, setActiveItem] = useState<string>('');//テキストエリア表示する要素
+
   let xOffset = 10; // 初期のX位置
 
-  const handleMouseDown = (e: any) => {
-    setIsDrawing(true);
-    const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
-    setLines([...lines, { id: lines.length, points: [pos.x, pos.y] }]);
-  };
+  // const handleMouseDown = (e: any) => {
+  //   setIsDrawing(true);
+  //   const stage = e.target.getStage();
+  //   const pos = stage.getPointerPosition();
+  //   setLines([...lines, { id: lines.length, points: [pos.x, pos.y] }]);
+  // };
 
-  const handleMouseMove = (e: any) => {
-    if (!isDrawing) return;
-    const stage = e.target.getStage();
-    const point = stage.getPointerPosition();
-    const lastLine = lines[lines.length - 1];
-    lastLine.points = [...lastLine.points, point.x, point.y];
-    const newLines = [...lines.slice(0, lines.length - 1), lastLine];
-    setLines(newLines);
-  };
+  // const handleMouseMove = (e: any) => {
+  //   if (!isDrawing) return;
+  //   const stage = e.target.getStage();
+  //   const point = stage.getPointerPosition();
+  //   const lastLine = lines[lines.length - 1];
+  //   lastLine.points = [...lastLine.points, point.x, point.y];
+  //   const newLines = [...lines.slice(0, lines.length - 1), lastLine];
+  //   setLines(newLines);
+  // };
 
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-  };
+  // const handleMouseUp = () => {
+  //   setIsDrawing(false);
+  // };
 
   useEffect(() => {
-    let xs = 0;
-    let ys = 0;
-    if (items[0]) {
-      xs = items[0].x;
-      ys = items[0].y;
+    if (activeItem == 'NEW'){
+      if (postContent != ''){
+        const now = parseInputToItem(postContent,0,0);
+        setItems([...items,now]);
+        setActiveItem(now.id);
+        console.log("ye")
+        //
+      }
+    }else{
+      //setItems([parseInputToItem(postContent,xs,ys)]);
+      setItems(items.map((item) => {
+        if (item.id == activeItem) {
+          const xs = item.x;
+          const ys = item.y;
+          const itemprot = parseInputToItem(postContent,xs,ys);
+          setActiveItem(itemprot.id);
+          return itemprot;
+        }else{
+          return item;
+        }
+      }))
     }
-    console.log(xs);
-    //console.log(ys);
-    setItems([parseInputToItem(postContent,xs,ys)]);
+    
   }, [postContent]);
 
   function handleClick(text: string) {
     setPostContent(text);
   };
 
+  const clickOnGroup = (e:any) => {
+    switch(tool){
+      case 'arrow':
+        //console.log(e.target.id())
+        setActiveItem(e.target.id());
+        for (let i=0; i<items.length; i++){
+          if (e.target.id() == items[i].id){
+            setPostContent(items[i].originalText);
+          }
+        }
+        break;
+    }
+  }
+
+  const newElement = (e?:any) => {
+    if (activeItem != 'NEW'){
+      setActiveItem('NEW');
+      setPostContent('');
+    }
+  }
+
+
   return (
     <div className="grid grid-cols-2">
       <div>
-        <textarea id="message" name="message"
+        <textarea id="message" name="message" value={postContent}
           onChange={e => handleClick(e.target.value)} className="mt-1 block w-full h-[calc(100vh-10rem)] px-3 py-2 text-base placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
         </textarea>
       </div>
 
       <div className="p-1">
         <div className="grid grid-cols-8">
-          <button className="bg-cyan-500 hover:bg-cyan-600 h-12 w-12">
+          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('pen')}}>
             <PencilIcon className="h-12 w-12" />
           </button>
-          <button className="bg-cyan-500 hover:bg-cyan-600 h-12 w-12" >
+          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('arrow');newElement();}}>
             <FolderPlusIcon className="h-12 w-12" />
+          </button>
+          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('arrow')}}>
+            <CursorArrowRaysIcon className="h-12 w-12" />
           </button>
 
         </div>
@@ -97,17 +137,10 @@ const DrawingCanvas: React.FC = () => {
                     x={item.x}
                     y={item.y}
                     onDragEnd={(e) => {
-                      items[0].x = (e.target.x() > 0)? e.target.x() : 0;
-                      items[0].y = (e.target.y() > 0)? e.target.y() : 0;
+                      item.x = (e.target.x() > 0)? e.target.x() : 0;
+                      item.y = (e.target.y() > 0)? e.target.y() : 0;
                     }}
-                    onDragStart={(e) => {
-                      const targetId = e.target.id();
-                      for (let i = 0;i < items.length; i++){
-                        if (items[i].id == targetId){
-                          setActiveItem(targetId);
-                        }
-                      }
-                    }}
+                    onClick={clickOnGroup}
                   >
                     {
                       item.sentences.map((sent) => {
@@ -121,7 +154,6 @@ const DrawingCanvas: React.FC = () => {
                                 FONTSIZE = 25;
                               }
                             })
-
 
                             const a = new Konva.Text({
                               text: ter.text,

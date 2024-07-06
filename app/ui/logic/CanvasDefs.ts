@@ -1,1 +1,1 @@
-export type toolf = 'pen' | 'eraser' | 'arrow';
+export type toolf = 'pen' | 'eraser' | 'arrow' | 'plus';
