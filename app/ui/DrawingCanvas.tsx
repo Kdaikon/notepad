@@ -5,9 +5,12 @@ import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 import Konva from 'konva';
-import { FolderPlusIcon, PencilIcon, CursorArrowRaysIcon } from '@heroicons/react/24/outline';
+import { FolderPlusIcon, PencilIcon, CursorArrowRaysIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { toolf } from './logic/CanvasDefs';
 import React, { Component } from 'react';
+import jsPDF from "jspdf"
+//const { jsPDF } = require("jspdf");
+
 
 const DrawingCanvas: React.FC = () => {
   //free write
@@ -18,6 +21,7 @@ const DrawingCanvas: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);//要素管理
   const stageRef = useRef<any>(null);//not use
   const [tool, setTool] = useState<toolf>('arrow');//現在ツール
+  const [dragOK, setDragOK] = useState<boolean>(true);
 
   let xOffset = 10; // 初期のX位置
 
@@ -43,42 +47,51 @@ const DrawingCanvas: React.FC = () => {
   // };
 
   useEffect(() => {
-    if (activeItem == 'NEW'){
-      if (postContent != ''){
-        const now = parseInputToItem(postContent,0,0);
-        setItems([...items,now]);
+    if (activeItem == 'NEW') {
+      if (postContent != '') {
+        const now = parseInputToItem(postContent, 0, 0);
+        setItems([...items, now]);
         setActiveItem(now.id);
-        console.log("ye")
-        //
       }
-    }else{
+    } else {
       //setItems([parseInputToItem(postContent,xs,ys)]);
       setItems(items.map((item) => {
         if (item.id == activeItem) {
           const xs = item.x;
           const ys = item.y;
-          const itemprot = parseInputToItem(postContent,xs,ys);
+          const itemprot = parseInputToItem(postContent, xs, ys);
           setActiveItem(itemprot.id);
           return itemprot;
-        }else{
+        } else {
           return item;
         }
       }))
     }
-    
+
   }, [postContent]);
+
+  useEffect(() => {
+    switch (tool) {
+      case 'arrow':
+        setDragOK(true);
+        break;
+      case 'pen':
+        setDragOK(false);
+        break;
+    }
+  }, [tool]);
 
   function handleClick(text: string) {
     setPostContent(text);
   };
 
-  const clickOnGroup = (e:any) => {
-    switch(tool){
+  const clickOnGroup = (e: any) => {
+    switch (tool) {
       case 'arrow':
         //console.log(e.target.id())
         setActiveItem(e.target.id());
-        for (let i=0; i<items.length; i++){
-          if (e.target.id() == items[i].id){
+        for (let i = 0; i < items.length; i++) {
+          if (e.target.id() == items[i].id) {
             setPostContent(items[i].originalText);
           }
         }
@@ -86,11 +99,24 @@ const DrawingCanvas: React.FC = () => {
     }
   }
 
-  const newElement = (e?:any) => {
-    if (activeItem != 'NEW'){
+  const newElement = (e?: any) => {
+    if (activeItem != 'NEW') {
       setActiveItem('NEW');
       setPostContent('');
     }
+  }
+
+  const savePdf = (e?: any) => {
+    const stage = stageRef.current;
+    let pdf = new jsPDF('l', 'px', [stage.width(), stage.height()]);
+    pdf.addImage(
+      stage.toDataURL({ pixelRatio: 2 }),
+      0,
+      0,
+      stage.width(),
+      stage.height()
+    );
+    pdf.save('canvas.pdf');
   }
 
 
@@ -103,15 +129,18 @@ const DrawingCanvas: React.FC = () => {
       </div>
 
       <div className="p-1">
-        <div className="grid grid-cols-8">
-          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('pen')}}>
+        <div className="flex-1 ">
+          <button className={`hover:bg-gray-300 h-12 w-12 ${tool == 'pen' ? 'bg-gray-500' : 'bg-gray-100'}`} onClick={(e) => { setTool('pen') }}>
             <PencilIcon className="h-12 w-12" />
           </button>
-          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('arrow');newElement();}}>
+          <button className="bg-gray-100 hover:bg-gray-300 h-12 w-12" onClick={(e) => { newElement(); }}>
             <FolderPlusIcon className="h-12 w-12" />
           </button>
-          <button className="bg-gray-300 hover:bg-gray-500 h-12 w-12" onClick={(e) => {setTool('arrow')}}>
+          <button className={`hover:bg-gray-300 h-12 w-12 ${tool == 'arrow' ? 'bg-gray-500' : 'bg-gray-100'}`} onClick={(e) => { setTool('arrow') }}>
             <CursorArrowRaysIcon className="h-12 w-12" />
+          </button>
+          <button className={`hover:bg-gray-300 h-12 w-12 bg-gray-100`} onClick={savePdf}>
+            <ArrowDownTrayIcon className="h-12 w-12" />
           </button>
 
         </div>
@@ -133,14 +162,14 @@ const DrawingCanvas: React.FC = () => {
                   <Group
                     id={item.id}
                     key={item.id}
-                    draggable
+                    draggable={dragOK}
                     x={item.x}
                     y={item.y}
                     onDragEnd={(e) => {
-                      item.x = (e.target.x() > 0)? e.target.x() : 0;
-                      item.y = (e.target.y() > 0)? e.target.y() : 0;
+                      item.x = (e.target.x() > 0) ? e.target.x() : 0;
+                      item.y = (e.target.y() > 0) ? e.target.y() : 0;
+                      clickOnGroup(e);
                     }}
-                    onClick={clickOnGroup}
                   >
                     {
                       item.sentences.map((sent) => {
