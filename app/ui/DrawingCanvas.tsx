@@ -26,6 +26,28 @@ const DrawingCanvas: React.FC = () => {
   const [dragOK, setDragOK] = useState<boolean>(true);//ドラッグできるかどうか
   const [writeOK, setWriteOK] = useState<boolean>(false);//ペンを使うかどうか
 
+  //cancvas用
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [stageWidth, setStageWidth] = useState<number>(0);
+  const [stageHeight, setStageHeight] = useState<number>(0);
+  useEffect(() => {
+    const updateStageWidth = () => {
+      if (containerRef.current) {
+        setStageWidth(containerRef.current.offsetWidth);
+        setStageHeight(containerRef.current.offsetHeight);
+      }
+    };
+    // 初期の幅を設定
+    updateStageWidth();
+    // ウィンドウのリサイズに対応
+    window.addEventListener('resize', updateStageWidth);
+    // クリーンアップ
+    return () => {
+      window.removeEventListener('resize', updateStageWidth);
+    };
+  }, []);
+  //ここまで
+
   let xOffset = 10; // 初期のX位置
 
   const handleMouseDown = (e: any) => {
@@ -160,7 +182,7 @@ const DrawingCanvas: React.FC = () => {
       <div>
         <textarea id="message" name="message" value={postContent}
           onChange={e => handleClick(e.target.value)}
-          className="mt-1 block w-full h-[calc(100vh-10rem)] px-3 py-2 text-base 
+          className="mt-1 block w-full h-[calc(100vh-7rem)] px-3 py-2 text-base 
           placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none 
           focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
         </textarea>
@@ -175,10 +197,10 @@ const DrawingCanvas: React.FC = () => {
           <ToolIcon iconName='peneraser' onClick={(e) => { setTool('peneraser') }} onUse={tool == 'peneraser'} />
           <ToolIcon iconName='download' onClick={savePdf} onUse={false} />
         </div>
-        <div className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
+        <div ref={containerRef} className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
           <Stage
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={stageWidth}
+            height={stageHeight}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
