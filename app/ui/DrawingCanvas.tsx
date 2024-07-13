@@ -9,6 +9,8 @@ import { FolderPlusIcon, PencilIcon, CursorArrowRaysIcon, ArrowDownTrayIcon } fr
 import { toolf } from './logic/CanvasDefs';
 import React, { Component } from 'react';
 import jsPDF from "jspdf"
+import ToolIcon from './components/ToolIcon';
+import { tree } from 'next/dist/build/templates/app-page';
 //const { jsPDF } = require("jspdf");
 
 
@@ -19,32 +21,36 @@ const DrawingCanvas: React.FC = () => {
   const [activeItem, setActiveItem] = useState('NEW');//テキストエリア表示する要素 NEW or uuidv4
   const [postContent, setPostContent] = useState('');//テキスト入力エリア
   const [items, setItems] = useState<Item[]>([]);//要素管理
-  const stageRef = useRef<any>(null);//not use
+  const stageRef = useRef<any>(null);//メインキャンバスのパス
   const [tool, setTool] = useState<toolf>('arrow');//現在ツール
-  const [dragOK, setDragOK] = useState<boolean>(true);
+  const [dragOK, setDragOK] = useState<boolean>(true);//ドラッグできるかどうか
+  const [writeOK, setWriteOK] = useState<boolean>(false);//ペンを使うかどうか
 
   let xOffset = 10; // 初期のX位置
 
-  // const handleMouseDown = (e: any) => {
-  //   setIsDrawing(true);
-  //   const stage = e.target.getStage();
-  //   const pos = stage.getPointerPosition();
-  //   setLines([...lines, { id: lines.length, points: [pos.x, pos.y] }]);
-  // };
+  const handleMouseDown = (e: any) => {
+    if (!writeOK) return;
+    setIsDrawing(true);
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    setLines([...lines, { id: lines.length, points: [pos.x, pos.y], tool:tool }]);
+  };
 
-  // const handleMouseMove = (e: any) => {
-  //   if (!isDrawing) return;
-  //   const stage = e.target.getStage();
-  //   const point = stage.getPointerPosition();
-  //   const lastLine = lines[lines.length - 1];
-  //   lastLine.points = [...lastLine.points, point.x, point.y];
-  //   const newLines = [...lines.slice(0, lines.length - 1), lastLine];
-  //   setLines(newLines);
-  // };
+  const handleMouseMove = (e: any) => {
+    if (!writeOK) return;
+    if (!isDrawing) return;
+    const stage = e.target.getStage();
+    const point = stage.getPointerPosition();
+    const lastLine = lines[lines.length - 1];
+    lastLine.points = [...lastLine.points, point.x, point.y];
+    const newLines = [...lines.slice(0, lines.length - 1), lastLine];
+    setLines(newLines);
+  };
 
-  // const handleMouseUp = () => {
-  //   setIsDrawing(false);
-  // };
+  const handleMouseUp = () => {
+    if (!writeOK) return;
+    setIsDrawing(false);
+  };
 
   useEffect(() => {
     if (activeItem == 'NEW') {
@@ -74,9 +80,19 @@ const DrawingCanvas: React.FC = () => {
     switch (tool) {
       case 'arrow':
         setDragOK(true);
+        setWriteOK(false);
         break;
       case 'pen':
         setDragOK(false);
+        setWriteOK(true);
+        break;
+      case 'eraser':
+        setDragOK(false);
+        setWriteOK(false);
+        break;
+      case 'peneraser':
+        setDragOK(false);
+        setWriteOK(true);
         break;
     }
   }, [tool]);
@@ -85,15 +101,33 @@ const DrawingCanvas: React.FC = () => {
     setPostContent(text);
   };
 
-  const clickOnGroup = (e: any) => {
+  const clickOnGroup = (target: any) => {
     switch (tool) {
       case 'arrow':
         //console.log(e.target.id())
-        setActiveItem(e.target.id());
+        setActiveItem(target.id());
         for (let i = 0; i < items.length; i++) {
-          if (e.target.id() == items[i].id) {
+          if (target.id() == items[i].id) {
             setPostContent(items[i].originalText);
           }
+        }
+        break;
+      case 'eraser':
+        let deleti = -1;
+        for (let i = 0; i < items.length; i++) {
+          if (target.id() == items[i].id) {
+            deleti = i;
+          }
+        }
+        if (deleti > 0) {
+          setItems(items.slice(0, deleti).concat(items.slice(deleti + 1)));
+          setActiveItem(items[0].id);
+          setPostContent(items[0].originalText);
+        }
+        if (deleti == 0) {
+          setItems([]);
+          setActiveItem('NEW');
+          setPostContent('');
         }
         break;
     }
@@ -103,6 +137,7 @@ const DrawingCanvas: React.FC = () => {
     if (activeItem != 'NEW') {
       setActiveItem('NEW');
       setPostContent('');
+      setTool('arrow');
     }
   }
 
@@ -124,36 +159,32 @@ const DrawingCanvas: React.FC = () => {
     <div className="grid grid-cols-2">
       <div>
         <textarea id="message" name="message" value={postContent}
-          onChange={e => handleClick(e.target.value)} className="mt-1 block w-full h-[calc(100vh-10rem)] px-3 py-2 text-base placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
+          onChange={e => handleClick(e.target.value)}
+          className="mt-1 block w-full h-[calc(100vh-10rem)] px-3 py-2 text-base 
+          placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none 
+          focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
         </textarea>
       </div>
 
       <div className="p-1">
         <div className="flex-1 ">
-          <button className={`hover:bg-gray-300 h-12 w-12 ${tool == 'pen' ? 'bg-gray-500' : 'bg-gray-100'}`} onClick={(e) => { setTool('pen') }}>
-            <PencilIcon className="h-12 w-12" />
-          </button>
-          <button className="bg-gray-100 hover:bg-gray-300 h-12 w-12" onClick={(e) => { newElement(); }}>
-            <FolderPlusIcon className="h-12 w-12" />
-          </button>
-          <button className={`hover:bg-gray-300 h-12 w-12 ${tool == 'arrow' ? 'bg-gray-500' : 'bg-gray-100'}`} onClick={(e) => { setTool('arrow') }}>
-            <CursorArrowRaysIcon className="h-12 w-12" />
-          </button>
-          <button className={`hover:bg-gray-300 h-12 w-12 bg-gray-100`} onClick={savePdf}>
-            <ArrowDownTrayIcon className="h-12 w-12" />
-          </button>
-
+          <ToolIcon iconName='plus' onClick={(e) => { newElement() }} onUse={false} />
+          <ToolIcon iconName='pen' onClick={(e) => { setTool('pen') }} onUse={tool == 'pen'} />
+          <ToolIcon iconName='arrow' onClick={(e) => { setTool('arrow') }} onUse={tool == 'arrow'} />
+          <ToolIcon iconName='eraser' onClick={(e) => { setTool('eraser') }} onUse={tool == 'eraser'} />
+          <ToolIcon iconName='peneraser' onClick={(e) => { setTool('peneraser') }} onUse={tool == 'peneraser'} />
+          <ToolIcon iconName='download' onClick={savePdf} onUse={false} />
         </div>
         <div className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
           <Stage
             width={window.innerWidth}
             height={window.innerHeight}
-            // onMouseDown={handleMouseDown}
-            // onMouseMove={handleMouseMove}
-            // onMouseUp={handleMouseUp}
-            // onTouchStart={handleMouseDown}
-            // onTouchMove={handleMouseMove}
-            // onTouchEnd={handleMouseUp}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchMove={handleMouseMove}
+            onTouchEnd={handleMouseUp}
             ref={stageRef}
           >
             <Layer>
@@ -168,8 +199,12 @@ const DrawingCanvas: React.FC = () => {
                     onDragEnd={(e) => {
                       item.x = (e.target.x() > 0) ? e.target.x() : 0;
                       item.y = (e.target.y() > 0) ? e.target.y() : 0;
-                      clickOnGroup(e);
+                      clickOnGroup(e.target);
                     }}
+                    onClick={(e) => {
+                      clickOnGroup(e.target.parent);
+                    }}
+                    onTap={(e) => { clickOnGroup(e.target.parent); }}
                   >
                     {
                       item.sentences.map((sent) => {
@@ -215,10 +250,12 @@ const DrawingCanvas: React.FC = () => {
                   key={line.id}
                   points={line.points}
                   stroke="black"
-                  strokeWidth={2}
+                  strokeWidth={line.tool === 'peneraser' ? 20 : 2}
                   tension={0.5}
                   lineCap="round"
-                  globalCompositeOperation="source-over"
+                  globalCompositeOperation={
+                    line.tool === 'peneraser' ? 'destination-out' : 'source-over'
+                  }
                 />
               ))}
             </Layer>
