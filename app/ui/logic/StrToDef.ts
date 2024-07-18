@@ -1,5 +1,5 @@
 export type deco = {
-    deco: 'r' | 't' | 'z' | string;
+    deco: 'r' | 't' | 'z' | 'p' | 'b' | 'u' |string;
 };
 
 export type term = {
@@ -29,7 +29,15 @@ export const deco_words: string[] = [
     'r',
     't',
     'z',
+    'p',
+    'b',
+    'u',
+    'd',
     'ｒ',
     'ｔ',
     'ｚ',
+    'ｐ',
+    'ｂ',
+    'ｕ',
+    'ｄ',
 ]

@@ -17,11 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="h-screen">
+      <body className="h-screen bg-gray-50">
         <div className="w-full flex-none">
           <Nav />
         </div>
-        <div className="px-3 flex-grow md:overflow-y-auto">
+        <div className="px-3 flex-grow overflow-y-auto">
           {children}
         </div>
       </body>

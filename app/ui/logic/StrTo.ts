@@ -14,15 +14,15 @@ export function parseInputToItem(input: string, dx:number ,dy:number ): Item {
         // Split sentence into terms by space character
         let isOffset = false;
 
-        const termStrings = sentenceStr.split(' ');
+        const termStrings = sentenceStr.split(/[' 　']/);
 
         const terms: term[] = termStrings.map((termStr, termN) => {
             const decos: deco[] = [];
             let text = '';
             //後で文字数判定追加 形骸化
-            let x = 0;
+            let x = 10;
             //  + termscount * 20;
-            let y = textOffset * 20;
+            let y = 10 + textOffset * 20;
             //仮設定
             let group = 0;
             let id = uuidv4();
@@ -31,20 +31,20 @@ export function parseInputToItem(input: string, dx:number ,dy:number ): Item {
             // Find all decorations and the remaining text
             let i = 0;
             while (i < termStr.length) {
-                if (termStr[i] === '^') {
+                if (termStr[i] === '^' || termStr[i] === '＾') {
                     i++;
                     if (deco_words.includes(termStr[i])) {
-                        decos.push({ deco: termStr[i] });
-                        switch (termStr[i]) {
+                        //全角は半角に変換する
+                        const temStrHan = termStr[i].replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (s) {
+                            return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+                        });
+                        decos.push({ deco: temStrHan });
+                        switch (temStrHan) {
                             case 't':
-                                fontsize = 30;
                                 isOffset = true;
                                 break;
-                            case 'ｔ':
-                                fontsize = 30;
+                            case 'p':
                                 isOffset = true;
-                                break;
-                            case 'r':
                                 break;
                             default:
                                 break;

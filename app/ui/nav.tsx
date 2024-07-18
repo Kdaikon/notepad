@@ -5,22 +5,31 @@ import { useState } from 'react';
 export default function Nav() {
     const [navClose, setNavClose] = useState<boolean>(false);
     return (
-        <div className="relative flex h-full flex-col px-3 py-2 md:px-2">
-            <Link
-                className={`mb-2 flex items-end justify-start rounded-md bg-gray-200 p-4
+        <div className="relative flex h-full flex-col pb-2 ">
+            <div
+                className={` flex items-end justify-start  bg-gray-700 
                     ${navClose ? 'h-5' : 'h-20'}`}
-                href="/"
             >
-                <div className={`w-80 text-gray-800 md:w-80 text-[30px] 
-                    ${navClose ? 'opacity-0' : 'opacity-1'}`}>
+                <Link className={`absolute bottom-16 md:bottom-9 ml-1 md:ml-2  w-80 
+                text-center text-gray-200 text-[30px] hover:text-gray-700 hover:bg-gray-200 rounded-md
+                    ${navClose ? 'opacity-0' : 'opacity-1'}`}
+                    href="/">
                     SUPER FAST NOTE
-                </div>
-                <div className={`absolute bottom-4 right-3 bg-gray-100 px-2 rounded-md`} >
-                    <button onClick={(e)=>{setNavClose(!navClose);}}>
-                        {navClose ? '↓open' : '↑close'}  
-                    </button>
-                </div>
+                </Link>
+
+            </div>
+            <Link
+                className={`absolute bottom-9 right-24 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-2 rounded-md`}
+                href="/details"
+            >
+                このページについて
             </Link>
-        </div>
+            <div className={`absolute bottom-9 right-3 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-6 rounded-md`} >
+                <button onClick={(e) => { setNavClose(!navClose); }}>
+                    {navClose ? '▼' : '▲'}
+                </button>
+            </div>
+            <div className='bg-amber-200 h-5 mb-2'/>
+        </div> 
     );
 }

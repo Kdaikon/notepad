@@ -1,18 +1,18 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Line, Text, Group } from 'react-konva';
 import { parseInputToItem } from "@/app/ui/logic/StrTo";
 import { Item } from './logic/StrToDef';
 import Konva from 'konva';
-import { FolderPlusIcon, PencilIcon, CursorArrowRaysIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { toolf } from './logic/CanvasDefs';
 import React, { Component } from 'react';
 import jsPDF from "jspdf"
 import ToolIcon from './components/ToolIcon';
-import { tree } from 'next/dist/build/templates/app-page';
+import Shelf from './components/shelf';
+import { saveData, getData } from './logic/LocalStrage';
+import ComListCombined from './components/comlistcombined';
+import { resolve } from 'path';
 //const { jsPDF } = require("jspdf");
-
 
 const DrawingCanvas: React.FC = () => {
   //free write
@@ -49,13 +49,15 @@ const DrawingCanvas: React.FC = () => {
   //ここまで
 
   let xOffset = 10; // 初期のX位置
+  const key = "itemdata";
+  const linekey = "linedata";
 
   const handleMouseDown = (e: any) => {
     if (!writeOK) return;
     setIsDrawing(true);
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
-    setLines([...lines, { id: lines.length, points: [pos.x, pos.y], tool:tool }]);
+    setLines([...lines, { id: lines.length, points: [pos.x, pos.y], tool: tool }]);
   };
 
   const handleMouseMove = (e: any) => {
@@ -74,29 +76,55 @@ const DrawingCanvas: React.FC = () => {
     setIsDrawing(false);
   };
 
+
   useEffect(() => {
+    const savedData = getData(key);
+    const savedLine = getData(linekey);
+    //console.log("got item");
+    //console.log(savedData);
+    if (savedData) {
+      //console.log("ok");
+      setItems(savedData);
+    }
+    if (savedLine) {
+      setLines(savedLine);
+    }
+  }, []);
+
+  useEffect(() => {
+    //console.log("useeffect2 called");
     if (activeItem == 'NEW') {
       if (postContent != '') {
         const now = parseInputToItem(postContent, 0, 0);
         setItems([...items, now]);
         setActiveItem(now.id);
+        saveData(key, items);
       }
     } else {
       //setItems([parseInputToItem(postContent,xs,ys)]);
-      setItems(items.map((item) => {
-        if (item.id == activeItem) {
-          const xs = item.x;
-          const ys = item.y;
-          const itemprot = parseInputToItem(postContent, xs, ys);
-          setActiveItem(itemprot.id);
-          return itemprot;
-        } else {
-          return item;
-        }
-      }))
+      // console.log(postContent);
+    setItems(items.map((item) => {
+      if (item.id == activeItem) {
+        const xs = item.x;
+        const ys = item.y;
+        const itemprot = parseInputToItem(postContent, xs, ys);
+        setActiveItem(itemprot.id);
+        return itemprot;
+      } else {
+        return item;
+      }
+    }))
+    saveData(key, items);
     }
-
   }, [postContent]);
+
+  
+
+  useEffect(() => {
+    if (lines.length) {
+      saveData(linekey, lines);
+    }
+  }, [lines])
 
   useEffect(() => {
     switch (tool) {
@@ -119,8 +147,8 @@ const DrawingCanvas: React.FC = () => {
     }
   }, [tool]);
 
-  function handleClick(text: string) {
-    setPostContent(text);
+  function handleClick(e: any) {
+    setPostContent(e.target.value);
   };
 
   const clickOnGroup = (target: any) => {
@@ -163,11 +191,25 @@ const DrawingCanvas: React.FC = () => {
     }
   }
 
+  const allVanish = (e?: any) => {
+    setItems([]);
+    setLines([]);
+    setActiveItem('NEW');
+    setPostContent('');
+    setTool('arrow');
+    saveData(linekey,lines);
+  }
+
   const savePdf = (e?: any) => {
     const stage = stageRef.current;
-    let pdf = new jsPDF('l', 'px', [stage.width(), stage.height()]);
+    let pdf = new jsPDF({
+      unit: 'px',
+      format: [stage.width(), stage.height()],
+      compress: true,
+    });
     pdf.addImage(
       stage.toDataURL({ pixelRatio: 2 }),
+      'PNG',
       0,
       0,
       stage.width(),
@@ -180,24 +222,27 @@ const DrawingCanvas: React.FC = () => {
   return (
     <div className="grid grid-cols-2">
       <div>
-        <textarea id="message" name="message" value={postContent}
-          onChange={e => handleClick(e.target.value)}
-          className="mt-1 block w-full h-[calc(100vh-7rem)] px-3 py-2 text-base 
+        <textarea title='message' id="message" name="message" value={postContent}
+          onChange={e => handleClick(e)}
+          className="mt-1 block w-full h-[calc(100vh-20rem)] px-3 py-2 text-base 
           placeholder-gray-400 border border-gray-300 rounded-md shadow-sm focus:outline-none 
           focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y">
         </textarea>
+        <ComListCombined x={stageWidth} y={250} />
       </div>
 
       <div className="p-1">
-        <div className="flex-1 ">
+        <div className="flex-initial ">
           <ToolIcon iconName='plus' onClick={(e) => { newElement() }} onUse={false} />
+          {/* <Shelf barName='del' height={12} /> */}
           <ToolIcon iconName='pen' onClick={(e) => { setTool('pen') }} onUse={tool == 'pen'} />
           <ToolIcon iconName='arrow' onClick={(e) => { setTool('arrow') }} onUse={tool == 'arrow'} />
           <ToolIcon iconName='eraser' onClick={(e) => { setTool('eraser') }} onUse={tool == 'eraser'} />
           <ToolIcon iconName='peneraser' onClick={(e) => { setTool('peneraser') }} onUse={tool == 'peneraser'} />
           <ToolIcon iconName='download' onClick={savePdf} onUse={false} />
+          <ToolIcon iconName='vanish' onClick={allVanish} onUse={false} />
         </div>
-        <div ref={containerRef} className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)]">
+        <div ref={containerRef} className="border border-gray-300 rounded-md w-full h-[calc(100vh-10rem)] bg-white">
           <Stage
             width={stageWidth}
             height={stageHeight}
@@ -210,6 +255,19 @@ const DrawingCanvas: React.FC = () => {
             ref={stageRef}
           >
             <Layer>
+              {lines.map((line) => (
+                <Line
+                  key={line.id}
+                  points={line.points}
+                  stroke="black"
+                  strokeWidth={line.tool === 'peneraser' ? 30 : 2}
+                  tension={0.5}
+                  lineCap="round"
+                  globalCompositeOperation={
+                    line.tool === 'peneraser' ? 'destination-out' : 'source-over'
+                  }
+                />
+              ))}
               {items.map((item) => {
                 const itemElement = (
                   <Group
@@ -222,6 +280,7 @@ const DrawingCanvas: React.FC = () => {
                       item.x = (e.target.x() > 0) ? e.target.x() : 0;
                       item.y = (e.target.y() > 0) ? e.target.y() : 0;
                       clickOnGroup(e.target);
+                      saveData(key, items);
                     }}
                     onClick={(e) => {
                       clickOnGroup(e.target.parent);
@@ -230,14 +289,30 @@ const DrawingCanvas: React.FC = () => {
                   >
                     {
                       item.sentences.map((sent) => {
-                        let length = 0;
+                        let length = 5;
                         const sentElement = (
                           sent.terms.map((ter) => {
 
                             let FONTSIZE = 20;
+                            let FILL = '#000000';
+                            let TEXTDECORATION = '';
+                            let FONTSTYLE = '';
+
                             ter.decos.map((deco) => {
                               if (deco.deco == 't') {
+                                FONTSIZE = 30;
+                              }
+                              if (deco.deco == 'p') {
                                 FONTSIZE = 25;
+                              }
+                              if (deco.deco == 'r') {
+                                FILL = '#ff0000';
+                              }
+                              if (deco.deco == 'd') {
+                                TEXTDECORATION = 'underline';
+                              }
+                              if (deco.deco == 'b') {
+                                FONTSTYLE += 'bold ';
                               }
                             })
 
@@ -253,6 +328,9 @@ const DrawingCanvas: React.FC = () => {
                                 y={ter.y}
                                 fontSize={FONTSIZE}
                                 key={ter.id}
+                                fill={FILL}
+                                fontStyle={FONTSTYLE}
+                                textDecoration={TEXTDECORATION}
                               />
                             );
                             length += a.getTextWidth();
@@ -267,21 +345,10 @@ const DrawingCanvas: React.FC = () => {
                 )
                 return itemElement;
               })}
-              {lines.map((line) => (
-                <Line
-                  key={line.id}
-                  points={line.points}
-                  stroke="black"
-                  strokeWidth={line.tool === 'peneraser' ? 20 : 2}
-                  tension={0.5}
-                  lineCap="round"
-                  globalCompositeOperation={
-                    line.tool === 'peneraser' ? 'destination-out' : 'source-over'
-                  }
-                />
-              ))}
+
             </Layer>
           </Stage>
+          <div className=' w-full text-right'>© 2024 Muff</div>
         </div>
       </div>
     </div>
