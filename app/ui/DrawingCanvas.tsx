@@ -103,7 +103,7 @@ const DrawingCanvas: React.FC = () => {
     } else {
       //setItems([parseInputToItem(postContent,xs,ys)]);
       // console.log(postContent);
-    setItems(items.map((item) => {
+    const itemstmp = items.map((item) => {
       if (item.id == activeItem) {
         const xs = item.x;
         const ys = item.y;
@@ -113,8 +113,9 @@ const DrawingCanvas: React.FC = () => {
       } else {
         return item;
       }
-    }))
-    saveData(key, items);
+    });
+    setItems(itemstmp);
+    saveData(key, itemstmp);
     }
   }, [postContent]);
 
@@ -197,7 +198,8 @@ const DrawingCanvas: React.FC = () => {
     setActiveItem('NEW');
     setPostContent('');
     setTool('arrow');
-    saveData(linekey,lines);
+    saveData(linekey,[]);
+    saveData(key, []);
   }
 
   const savePdf = (e?: any) => {
