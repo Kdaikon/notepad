@@ -50,6 +50,9 @@ export function parseInputToItem(input: string, dx:number ,dy:number ): Item {
                                 break;
                         }
                     }
+                    if (termStr[i] === '^' || termStr[i] === '＾'){
+                        text += termStr[i];
+                    }
                 } else {
                     text += termStr[i];
                 }
