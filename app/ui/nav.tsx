@@ -19,10 +19,16 @@ export default function Nav() {
 
             </div>
             <Link
-                className={`absolute bottom-9 right-24 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-2 rounded-md`}
-                href="/details"
+                className={`absolute bottom-9 right-60 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-2 rounded-md`}
+                href="/canvas"
             >
-                このページについて
+                CANVAS
+            </Link>
+            <Link
+                className={`absolute bottom-9 right-24 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-2 rounded-md`}
+                href="/canvas/details"
+            >
+                INFO:CAN
             </Link>
             <div className={`absolute bottom-9 right-3 text-gray-200 hover:text-gray-700 hover:bg-gray-200 px-6 rounded-md`} >
                 <button onClick={(e) => { setNavClose(!navClose); }}>
